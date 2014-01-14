@@ -27,26 +27,6 @@ class Shoes
         redraw
       end
 
-      def get_height
-        get_size.last
-      end
-
-      def get_size
-        # TODO: This isn't right, but this gets called by the DSL early before
-        # we've actually fitted. We have to respond with something, but until
-        # contents_alignment, we don't actually know our size.
-        #
-        # A better solution would probably be having contents_alignment write
-        # back to the DSL instead and making sure the early load cases can
-        # handle not having the values before we've positioned thing.
-        #
-        # Additionally, the sizing applied in the DSL doesn't factor in any
-        # explicitly set values for height/width.
-        text_layout = generate_layout(nil, @dsl.text)
-        bounds = text_layout.bounds
-        return bounds.width, bounds.height
-      end
-
       def generate_layout(width, text)
         layout = ::Swt::TextLayout.new Shoes.display
         layout.setText text
@@ -55,7 +35,7 @@ class Shoes
                                ::Swt::SWT::NORMAL
         style = ::Swt::TextStyle.new font, nil, nil
         layout.setStyle style, 0, text.length - 1
-        shrink_layout_to(layout, width) if width && !layout_fits_in?(layout, width)
+        shrink_layout_to(layout, width) unless layout_fits_in?(layout, width)
 
         layout
       end
@@ -134,16 +114,12 @@ class Shoes
         clear_links
         # TODO We should never use instance_variable_set rather an accessor
         @dsl.instance_variable_set :@text, values.map(&:to_s).join
-        if @dsl.text.length > 1
-          @dsl.element_width, @dsl.element_height = get_size
-        end
         @dsl.update_text_styles(values)
         redraw
       end
 
       def contents
       end
-
 
       private
 
